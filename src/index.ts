@@ -1164,5 +1164,38 @@ app.get('/api/steam/subscribed', async (c) => {
   }
 })
 
+// ── /ISteamRemoteStorage/GetPublishedFileDetails/v1/ ─────────────────────
+// 透明中继路由：供 Swift / 原生客户端直接以 Steam API 路径调用代理。
+// 客户端只需把 base URL 从 api.steampowered.com 换成代理域名，无需改任何其他代码。
+// 客户端可以不携带 key，代理自动从环境变量注入；若客户端已带 key 则保留原值。
+app.post('/ISteamRemoteStorage/GetPublishedFileDetails/v1/', async (c) => {
+  const { apiKey } = resolveKeys(c.req.query(), c.env)
+
+  // 读取客户端发来的 form-encoded body
+  // 例：itemcount=2&publishedfileids[0]=123&publishedfileids[1]=456
+  let clientBody: string
+  try {
+    clientBody = await c.req.text()
+  } catch {
+    return c.json({ error: 'invalid_body', message: 'Cannot read request body' }, 400)
+  }
+
+  // 解析 body，检查客户端是否已携带 key；没有则注入代理的 key
+  const parsed = new URLSearchParams(clientBody)
+  if (!parsed.has('key')) {
+    parsed.set('key', apiKey)
+  }
+
+  try {
+    const upstream = await steamPost(
+      '/ISteamRemoteStorage/GetPublishedFileDetails/v1/',
+      parsed.toString(),
+    )
+    return proxyResponse(upstream)
+  } catch (e) {
+    return c.json({ error: 'upstream_error', message: String(e) }, 502)
+  }
+})
+
 // ── Export ────────────────────────────────────────────────────────────────
 export default app
