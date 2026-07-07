@@ -854,7 +854,7 @@ async function doTest() {
 
     if (ep === 'details') {
       const rawIds = document.getElementById('p-ids').value
-      const ids = rawIds.split(/[,\n]+/).map(s => s.trim()).filter(Boolean)
+      const ids = rawIds.split(/[,\\n]+/).map(s => s.trim()).filter(Boolean)
       url = '/api/steam/details'
       const bodyObj = { ids }
       if (apiKey) bodyObj.apiKey = apiKey
