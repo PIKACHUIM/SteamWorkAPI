@@ -1,0 +1,20 @@
+{
+  "name": "steam-workshop-proxy",
+  "version": "1.0.0",
+  "description": "Steam Workshop API 代理服务，支持 Cloudflare Workers / 腾讯 EdgeOne / 阿里云 ESA 部署",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy:cf": "wrangler deploy --minify",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.7.11"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250620.0",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.19.0"
+  }
+}

@@ -1,0 +1,13 @@
+name = "steamapi-work"
+main = "src/index.ts"
+compatibility_date = "2025-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+STEAM_API_KEY = "C3CBFF169FCAC7F110689B8C6E6908E7"
+STEAM_APP_ID = "431960"
+
+# 可选：绑定自定义域名
+# [[routes]]
+# pattern = "steam.yourdomain.com/*"
+# zone_name = "yourdomain.com"
