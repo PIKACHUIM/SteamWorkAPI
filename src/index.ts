@@ -52,9 +52,11 @@ function getCountry(req: Request): string {
 }
 
 function isAllowed(country: string, allowArea: string): boolean {
-  if (!allowArea) return true                     // no restriction configured
-  if (country === 'unknown') return true          // local dev / CI, always pass
-  return country === allowArea
+  if (!allowArea) return true                          // no restriction configured
+  if (country === 'unknown') return true               // local dev / CI, always pass
+  // support comma-separated list, e.g. "CN,HK,MO"
+  const allowed = allowArea.split(',').map(s => s.trim()).filter(Boolean)
+  return allowed.includes(country)
 }
 
 
@@ -408,22 +410,22 @@ footer a:hover{color:var(--sky)}
   <div class="feat-grid">
     <div class="feat-card sky reveal">
       <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-      <div class="feat-title" data-i18n="feat1.title">三平台一键部署</div>
+      <div class="feat-title" data-i18n="feat1.title">多平台一键部署</div>
       <div class="feat-body" data-i18n="feat1.body">同一份代码无缝运行于 Cloudflare Workers、腾讯 EdgeOne 与阿里云 ESA，标准 V8 Isolate 运行时，零冷启动延迟。</div>
     </div>
     <div class="feat-card em reveal" style="transition-delay:.06s">
       <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-      <div class="feat-title" data-i18n="feat2.title">仅限中国大陆访问</div>
-      <div class="feat-body" data-i18n="feat2.body">内置 IP 地域检测中间件，海外访问自动返回 HTTP <strong style="color:var(--rose)">451</strong>，合规运营无后顾之忧。</div>
+      <div class="feat-title" data-i18n="feat2.title">支持限制IP地域</div>
+      <div class="feat-body" data-i18n="feat2.body">内置 IP 地域检测中间件，非允许地区IP访问自动返回 HTTP <strong style="color:var(--rose)">451</strong>，合规运营无后顾之忧。</div>
     </div>
     <div class="feat-card am reveal" style="transition-delay:.10s">
       <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
-      <div class="feat-title" data-i18n="feat3.title">边缘低延迟</div>
+      <div class="feat-title" data-i18n="feat3.title">边缘低延迟代理</div>
       <div class="feat-body" data-i18n="feat3.body">通过就近边缘节点代理，规避国内直连 Steam API 超时，P99 响应时间大幅降低。</div>
     </div>
     <div class="feat-card vi reveal" style="transition-delay:.14s">
       <div class="feat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div>
-      <div class="feat-title" data-i18n="feat4.title">零代码配置</div>
+      <div class="feat-title" data-i18n="feat4.title">零代码配置部署</div>
       <div class="feat-body" data-i18n="feat4.body">API Key 与 App ID 通过环境变量注入，内置合理默认值。Fork 后直接部署，支持 <span class="feat-tag">STEAM_API_KEY</span> <span class="feat-tag">STEAM_APP_ID</span> 覆盖。</div>
     </div>
   </div>
