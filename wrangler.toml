@@ -9,7 +9,7 @@ STEAM_APP_ID  = "431960"
 # 上游 Steam API 地址（可替换为镜像或自定义代理）
 STEAM_BASE    = "https://api.steampowered.com"
 # 访问限制：填入国家代码如 CN 则仅该地区可访问；留空不限制任何地区
-ALLOW_AREA    = "CN"
+ALLOW_AREA    = "CN,HK"
 
 # 可选：绑定自定义域名
 # [[routes]]

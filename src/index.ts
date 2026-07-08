@@ -25,15 +25,30 @@ function getEnv(env: Env) {
 }
 
 function getCountry(req: Request): string {
+  // ── Cloudflare Workers: native cf binding (most reliable) ─────────────
   const cfReq = req as Request & { cf?: { country?: string } }
-  if (cfReq.cf?.country) return cfReq.cf.country
-  return (
-    req.headers.get('X-Country-Code') ||
-    req.headers.get('CF-IPCountry')   ||
-    req.headers.get('X-Client-Country') ||
-    req.headers.get('X-Geo-Country')  ||
-    'unknown'
-  )
+  if (cfReq.cf?.country) return cfReq.cf.country.toUpperCase()
+
+  // ── Header-based fallback (EdgeOne / ESA / generic CDN) ───────────────
+  const candidates = [
+    // Cloudflare (header form, e.g. via Wrangler local / fallback)
+    'CF-IPCountry',
+    // Tencent EdgeOne Edge Functions
+    'EO-Client-IP-Country',
+    'X-EdgeOne-Client-Country',
+    // Alibaba ESA
+    'X-Geo-Country',
+    'X-Alibaba-Client-Country',
+    // Generic / self-deployed reverse proxy
+    'X-Country-Code',
+    'X-Client-Country',
+    'X-Real-IP-Country',
+  ]
+  for (const h of candidates) {
+    const v = req.headers.get(h)
+    if (v && v.trim()) return v.trim().toUpperCase()
+  }
+  return 'unknown'
 }
 
 function isAllowed(country: string, allowArea: string): boolean {
