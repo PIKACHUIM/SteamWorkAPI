@@ -6,7 +6,7 @@ export interface Env {
   STEAM_API_KEY?: string
   STEAM_APP_ID?:  string
   STEAM_BASE?:    string   // upstream base URL, default https://api.steampowered.com
-  CN_ONLY?:       string   // set to "false" / "0" / "no" to disable mainland-only restriction
+  ALLOW_AREA?:    string   // e.g. "CN" to restrict to mainland China only; empty = allow all
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -16,12 +16,11 @@ const DEFAULT_STEAM_BASE = 'https://api.steampowered.com'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function getEnv(env: Env) {
-  const cnOnly = env.CN_ONLY ?? 'true'
   return {
-    apiKey:    env.STEAM_API_KEY || DEFAULT_API_KEY,
-    appId:     env.STEAM_APP_ID  || DEFAULT_APP_ID,
-    steamBase: (env.STEAM_BASE   || DEFAULT_STEAM_BASE).replace(/\/$/, ''),
-    cnOnly:    !['false', '0', 'no'].includes(cnOnly.toLowerCase()),
+    apiKey:     env.STEAM_API_KEY || DEFAULT_API_KEY,
+    appId:      env.STEAM_APP_ID  || DEFAULT_APP_ID,
+    steamBase:  (env.STEAM_BASE   || DEFAULT_STEAM_BASE).replace(/\/$/, ''),
+    allowArea:  (env.ALLOW_AREA   || '').trim().toUpperCase(),  // '' = allow all
   }
 }
 
@@ -37,9 +36,10 @@ function getCountry(req: Request): string {
   )
 }
 
-function isAllowed(country: string, cnOnly: boolean): boolean {
-  if (!cnOnly) return true                        // restriction disabled
-  return country === 'CN' || country === 'unknown'
+function isAllowed(country: string, allowArea: string): boolean {
+  if (!allowArea) return true                     // no restriction configured
+  if (country === 'unknown') return true          // local dev / CI, always pass
+  return country === allowArea
 }
 
 
@@ -631,9 +631,9 @@ curl <span class="str">"https://your-worker.workers.dev/health"</span></pre>
           <td style="font-size:.72rem">api.steampowered.com</td>
         </tr>
         <tr>
-          <td>CN_ONLY</td>
-          <td data-i18n="env.cnonly.desc">是否仅允许大陆访问，false/0/no 可关闭限制</td>
-          <td>true</td>
+          <td>ALLOW_AREA</td>
+          <td data-i18n="env.allowarea.desc">限制访问地区，填 CN 仅允许大陆，留空不限制</td>
+          <td style="color:var(--faint)">（空）</td>
         </tr>
       </tbody>
     </table>
@@ -759,7 +759,7 @@ const I18N = {
     'p.itemcount':'请求的文件数量','p.pubfileids':'Workshop 文件 ID，N 从 0 开始',
     'usage.title':'使用示例','code.expand':'展开','code.collapse':'收起',
     'config.title':'环境变量',
-    'env.key.desc':'Steam Web API 密钥','env.appid.desc':'目标 Steam App ID（Mirage Wallpaper）','env.base.desc':'上游 Steam API 地址，可替换为镜像或自定义代理','env.cnonly.desc':'是否仅允许大陆访问，false/0/no 可关闭限制',
+    'env.key.desc':'Steam Web API 密钥','env.appid.desc':'目标 Steam App ID（Mirage Wallpaper）','env.base.desc':'上游 Steam API 地址，可替换为镜像或自定义代理','env.allowarea.desc':'限制访问地区代码，如 CN 仅允许大陆 IP，留空则不限制任何地区',
     'env.note':'前往 steamcommunity.com/dev/apikey 申请专属 Key，在平台控制台的 Variables / 环境变量处覆盖默认值即可，无需修改代码。',
     'test.title':'API 测试','test.panel':'在线测试','test.hint':'key 留空则使用服务端环境变量',
     'test.apikey':'API Key','test.appid':'App ID',
@@ -795,7 +795,7 @@ const I18N = {
     'p.itemcount':'Number of files to fetch','p.pubfileids':'Workshop file ID, N starts at 0',
     'usage.title':'Usage Examples','code.expand':'Expand','code.collapse':'Collapse',
     'config.title':'Environment Variables',
-    'env.key.desc':'Steam Web API key','env.appid.desc':'Target Steam App ID (Mirage Wallpaper)','env.base.desc':'Upstream Steam API base URL, replaceable with a mirror or custom proxy','env.cnonly.desc':'Restrict to mainland China only; set false/0/no to disable',
+    'env.key.desc':'Steam Web API key','env.appid.desc':'Target Steam App ID (Mirage Wallpaper)','env.base.desc':'Upstream Steam API base URL, replaceable with a mirror or custom proxy','env.allowarea.desc':'Country code to restrict access, e.g. CN for mainland China only; empty = allow all',
     'env.note':'Get your own key at steamcommunity.com/dev/apikey, then override the default in your platform console — no code changes needed.',
     'test.title':'API Test','test.panel':'Live Test','test.hint':'Leave key blank to use server env var',
     'test.apikey':'API Key','test.appid':'App ID',
@@ -970,8 +970,8 @@ app.use('*', cors())
 // ── Homepage ───────────────────────────────────────────────────────────────
 app.get('/', async (c) => {
   const country = getCountry(c.req.raw)
-  const { cnOnly } = getEnv(c.env)
-  if (!isAllowed(country, cnOnly)) {
+  const { allowArea } = getEnv(c.env)
+  if (!isAllowed(country, allowArea)) {
     return c.html(blockedPage(country), 451)
   }
   return c.html(homePage(), 200)
@@ -990,8 +990,8 @@ app.get('/health', (c) => {
  */
 async function proxyToSteam(c: import('hono').Context<{ Bindings: Env }>): Promise<Response> {
   const country = getCountry(c.req.raw)
-  const { apiKey, appId, steamBase, cnOnly } = getEnv(c.env)
-  if (!isAllowed(country, cnOnly)) {
+  const { apiKey, appId, steamBase, allowArea } = getEnv(c.env)
+  if (!isAllowed(country, allowArea)) {
     return new Response(blockedPage(country), {
       status: 451,
       headers: { 'Content-Type': 'text/html;charset=UTF-8' },

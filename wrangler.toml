@@ -8,8 +8,8 @@ STEAM_API_KEY = "C3CBFF169FCAC7F110689B8C6E6908E7"
 STEAM_APP_ID  = "431960"
 # 上游 Steam API 地址（可替换为镜像或自定义代理）
 STEAM_BASE    = "https://api.steampowered.com"
-# 是否仅允许中国大陆访问：true / false（默认 true）
-CN_ONLY       = "true"
+# 访问限制：填入国家代码如 CN 则仅该地区可访问；留空不限制任何地区
+ALLOW_AREA    = "CN"
 
 # 可选：绑定自定义域名
 # [[routes]]
